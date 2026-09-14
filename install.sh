@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # flagxs 開発環境構築のブートストラップスクリプト。
-# Ansible とその実行に必要な Python まわり、GitHub CLI、Claude Code を Ubuntu にインストールする。
+# Ansible、GitHub CLI、Claude Code を Ubuntu にインストールする。
 #
 # 使い方:
 #   curl -fsSL https://raw.githubusercontent.com/sevend-dev/flagxs-dev-local-env-bootstrap/main/install.sh | bash
@@ -13,9 +13,6 @@ set -euo pipefail
 readonly APT_PACKAGES=(
   software-properties-common
   curl
-  python-is-python3
-  python3-pip
-  python3-venv
 )
 
 readonly GITHUB_CLI_KEYRING=/etc/apt/keyrings/githubcli-archive-keyring.gpg
