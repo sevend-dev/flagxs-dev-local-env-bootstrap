@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 #
 # flagxs 開発環境構築のブートストラップスクリプト。
-# Ansible、GitHub CLI、mise、Claude Code を Ubuntu にインストールする。
+# GitHub CLI、mise、Claude Code を Ubuntu にインストールする。
 #
 # 実行コマンドを含む手順は社内の開発ドキュメントに記載している。
-# 実行後は構成管理リポジトリを clone して playbook を実行すること。
+# 開発に必要なツールの残りは、実行後に社内の開発ドキュメントの手順で入れる。
 #
 set -euo pipefail
 
+# software-properties-common は add-apt-repository のため。後段の手順で PPA を追加するのに使う
 readonly APT_PACKAGES=(
   software-properties-common
   curl
@@ -48,21 +49,6 @@ install_apt_packages() {
 
   log "必要な apt パッケージをインストールします: ${APT_PACKAGES[*]}"
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "${APT_PACKAGES[@]}"
-}
-
-add_ansible_ppa() {
-  if [[ -n "$(find /etc/apt/sources.list.d -name '*ansible*' -print -quit 2>/dev/null)" ]]; then
-    log "Ansible の PPA は既に追加済みのためスキップします"
-    return
-  fi
-
-  log "Ansible の PPA を追加します"
-  sudo add-apt-repository --yes --update ppa:ansible/ansible
-}
-
-install_ansible() {
-  log "Ansible をインストールします"
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y ansible
 }
 
 # GitHub CLI は公式 apt リポジトリから取得する
@@ -150,13 +136,13 @@ print_next_steps() {
 
 セットアップが完了しました。続けて以下を実行してください。
 
-  1. GitHub の認証を済ませる
+  1. シェルを開き直す（インストールしたコマンドを PATH に反映するため）
+       exec bash -l
+
+  2. GitHub の認証を済ませる（Git の操作には SSH を選び、SSH 鍵を生成する）
        gh auth login
 
-  2. Claude Code にログインする
-       claude
-
-  3. 構成管理リポジトリを clone し、README の手順に従って playbook を実行する
+  3. 社内の開発ドキュメントの手順に従って、続きを進める
 
 MSG
 }
@@ -165,15 +151,12 @@ main() {
   check_prerequisites
   authenticate_sudo
   install_apt_packages
-  add_ansible_ppa
-  install_ansible
   add_github_cli_repository
   install_github_cli
   install_mise
   activate_mise_in_bashrc
   install_claude_code
 
-  log "インストールされた Ansible: $(ansible --version | head -n 1)"
   log "インストールされた GitHub CLI: $(gh --version | head -n 1)"
   log "インストールされた mise: $("$HOME/.local/bin/mise" --version)"
   warn_if_local_bin_not_in_path
