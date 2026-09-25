@@ -131,22 +131,6 @@ warn_if_local_bin_not_in_path() {
   log "注意: \$HOME/.local/bin が PATH に含まれていません。シェルを開き直すと有効になります。"
 }
 
-print_next_steps() {
-  cat <<'MSG'
-
-セットアップが完了しました。続けて以下を実行してください。
-
-  1. シェルを開き直す（インストールしたコマンドを PATH に反映するため）
-       exec bash -l
-
-  2. GitHub の認証を済ませる（Git の操作には SSH を選び、SSH 鍵を生成する）
-       gh auth login
-
-  3. 社内の開発ドキュメントの手順に従って、続きを進める
-
-MSG
-}
-
 main() {
   check_prerequisites
   authenticate_sudo
@@ -160,7 +144,7 @@ main() {
   log "インストールされた GitHub CLI: $(gh --version | head -n 1)"
   log "インストールされた mise: $("$HOME/.local/bin/mise" --version)"
   warn_if_local_bin_not_in_path
-  print_next_steps
+  log '社内の開発ドキュメントの手順に従って、続きを進めてください'
 }
 
 main "$@"

@@ -144,25 +144,6 @@ function Install-Ubuntu {
     }
 }
 
-function Write-NextSteps {
-    Write-Host @"
-
-セットアップが完了しました。続けて以下を実行してください。
-
-  1. PC を再起動する（Docker Desktop などを有効にするため）
-
-  2. Ubuntu を起動し、ユーザーを作成する（ユーザー名は社内の開発ドキュメントに従う）
-       wsl -d $UbuntuDistribution
-     作成したら、既定のディストリビューションにする
-       wsl --set-default $UbuntuDistribution
-
-  3. Docker Desktop を起動し、Settings > Resources > WSL integration で $UbuntuDistribution を ON にする
-
-  4. 社内の開発ドキュメントの手順に従って、Ubuntu 側の続きを進める
-
-"@
-}
-
 function Main {
     Test-Prerequisites
     if (-not (Install-Wsl)) {
@@ -171,7 +152,7 @@ function Main {
     New-WslConfig
     Install-WingetPackages
     Install-Ubuntu
-    Write-NextSteps
+    Write-Log '社内の開発ドキュメントの手順に従って、Ubuntu 側の続きを進めてください'
 }
 
 # irm | iex で実行されるため、exit を使うと PowerShell のウィンドウごと閉じてしまう。
