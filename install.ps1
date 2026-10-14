@@ -38,6 +38,17 @@ function Test-Prerequisites {
     }
 }
 
+# 再起動待ちの更新が残っていると、wsl --install が成功を返しても Ubuntu が入らないため、先に止める
+function Test-RebootPending {
+    $keys = @(
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending'
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired'
+    )
+    if ($keys | Where-Object { Test-Path $_ }) {
+        throw 'PC の再起動待ちの更新があります。Windows Update で保留中の更新をインストールし、PC を再起動してから、もう一度実行してください。'
+    }
+}
+
 # wsl.exe の出力は UTF-16 のため、受け取る間だけ PowerShell が読む文字コードを合わせる。
 # 合わせないと、パイプや変数で受けた出力が文字化けする
 function Invoke-Wsl {
@@ -157,6 +168,7 @@ function Install-Ubuntu {
 
 function Main {
     Test-Prerequisites
+    Test-RebootPending
     if (-not (Install-Wsl)) {
         return
     }
