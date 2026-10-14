@@ -38,6 +38,18 @@ function Test-Prerequisites {
     }
 }
 
+# wsl.exe の出力は UTF-16 のため、受け取る間だけ PowerShell が読む文字コードを合わせる。
+# 合わせないと、パイプや変数で受けた出力が文字化けする
+function Invoke-Wsl {
+    $previousEncoding = [Console]::OutputEncoding
+    [Console]::OutputEncoding = [System.Text.Encoding]::Unicode
+    try {
+        wsl.exe @args
+    } finally {
+        [Console]::OutputEncoding = $previousEncoding
+    }
+}
+
 # WSL 本体。有効化の直後は再起動が必要になることがあるため、その場合は $false を返して止める
 function Install-Wsl {
     wsl.exe --status *> $null
@@ -45,12 +57,12 @@ function Install-Wsl {
         Write-Log 'WSL は既にインストール済みのためスキップします'
         Write-Log 'WSL を更新します'
         # 出力を Out-Host に流す。流さないと関数の戻り値に混ざり、$true / $false の判定が壊れる
-        wsl.exe --update | Out-Host
+        Invoke-Wsl --update | Out-Host
         return $true
     }
 
     Write-Log 'WSL をインストールします'
-    wsl.exe --install --no-distribution | Out-Host
+    Invoke-Wsl --install --no-distribution | Out-Host
     if ($LASTEXITCODE -ne 0) {
         throw 'WSL のインストールに失敗しました。'
     }
@@ -121,8 +133,7 @@ function Install-WingetPackages {
 }
 
 function Test-UbuntuInstalled {
-    # wsl.exe -l の出力は UTF-16 のため、ヌル文字を除いてから比較する
-    $distributions = (wsl.exe --list --quiet) -replace "`0", '' | ForEach-Object { $_.Trim() }
+    $distributions = Invoke-Wsl --list --quiet | ForEach-Object { $_.Trim() }
     return ($distributions -contains $UbuntuDistribution)
 }
 
