@@ -106,6 +106,35 @@ activate_mise_in_bashrc() {
   printf '\n# mise\n%s\n' "$MISE_ACTIVATE_LINE" >>"$bashrc"
 }
 
+# WSL からは xdg-open でブラウザを開けず、gh auth login や Claude Code のログインで止まるため、
+# Windows 既定のブラウザで開くコマンドを置き、BROWSER に設定する。
+# BROWSER に引数付きの文字列を入れると gh が空白で分割して誤動作するため、ラッパーを挟む。
+readonly BROWSER_OPENER="$HOME/.local/bin/open-in-windows-browser"
+
+set_up_browser_for_wsl() {
+  if [[ -z "${WSL_DISTRO_NAME:-}" ]]; then
+    log "WSL ではないため、ブラウザの設定をスキップします"
+    return
+  fi
+
+  log "Windows のブラウザで URL を開くコマンドを配置します: $BROWSER_OPENER"
+  mkdir -p "$(dirname "$BROWSER_OPENER")"
+  cat >"$BROWSER_OPENER" <<'EOF'
+#!/bin/sh
+exec /mnt/c/Windows/System32/rundll32.exe url.dll,FileProtocolHandler "$@"
+EOF
+  chmod +x "$BROWSER_OPENER"
+
+  local bashrc="$HOME/.bashrc"
+  if [[ -f "$bashrc" ]] && grep -Fq 'export BROWSER=' "$bashrc"; then
+    log "BROWSER の設定は既に ~/.bashrc にあるためスキップします"
+    return
+  fi
+
+  log "BROWSER の設定を ~/.bashrc に追記します"
+  printf '\n# WSL から Windows のブラウザで開く\nexport BROWSER="%s"\n' "$BROWSER_OPENER" >>"$bashrc"
+}
+
 # Claude Code はネイティブインストーラで導入する。
 # ~/.local/share/claude 配下にバージョンごとに配置され、自動アップデートが有効になる。
 # root で実行するとホームディレクトリの配置先が変わるため sudo は使わない。
@@ -139,6 +168,7 @@ main() {
   install_github_cli
   install_mise
   activate_mise_in_bashrc
+  set_up_browser_for_wsl
   install_claude_code
 
   log "インストールされた GitHub CLI: $(gh --version | head -n 1)"
